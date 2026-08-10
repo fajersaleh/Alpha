@@ -2,128 +2,228 @@
 
 ## Overview
 
-This Python script performs two basic networking tasks:
+This project is a simple Python program for network discovery and TCP port scanning.
 
-1. **Host discovery** — it pings IP addresses from `10.0.2.1` through `10.0.2.19` and reports which hosts are active.
-2. **TCP port scanning** — it asks the user for a target IP address and checks a predefined list of common TCP ports.
+The program first finds active devices on the local network. After that, it scans selected TCP ports on the discovered hosts and shows which ports are open.
 
-The script is intended for simple networking practice and controlled lab environments.
+The project was tested in a controlled lab environment using Kali Linux.
 
 ## Features
 
-- Scans the subnet range `10.0.2.1` to `10.0.2.19`.
-- Uses the system `ping` command to identify active hosts.
-- Accepts a target IP address from the user.
-- Checks common TCP ports using Python sockets.
-- Reports each tested port as `OPEN` or `CLOSED`.
-- Uses a 1-second socket timeout.
+- Finds active hosts on the local network.
+- Uses Python sockets to check whether hosts are reachable.
+- Scans selected TCP ports.
+- Shows the IP address of discovered hosts.
+- Shows the hostname of the target when available.
+- Identifies common services based on port numbers.
+- Saves scan results as CSV and TXT files.
+- Creates a separate report for each scan.
+- Includes an authorization check before starting the scan.
 
 ## Ports Scanned
 
+The current program checks these TCP ports:
+
 | Port | Common Service |
 |------|----------------|
-| 20 | FTP Data |
-| 21 | FTP Control |
-| 22 | SSH |
-| 23 | Telnet |
-| 25 | SMTP |
-| 53 | DNS |
-| 80 | HTTP |
-| 443 | HTTPS |
+| 22   | SSH            |
+| 80   | HTTP           |
+| 443  | HTTPS          |
+
+Port 8080 can also be added when testing with the lab server.
 
 ## Requirements
 
-- Python 3
-- Standard Python libraries:
-  - `subprocess`
-  - `socket`
+The project requires:
 
-No additional packages need to be installed.
+- Kali Linux
+- Python 3
+
+The program uses standard Python libraries:
+
+- `socket`
+- `csv`
+- `os`
+- `datetime`
+- `concurrent.futures`
+
+No additional Python packages are required.
 
 ## How to Run
 
-Open a terminal in the folder containing the script and run:
+Open a terminal in the project folder and run:
 
 ```bash
-python network.py
+python3 network.py
 ```
 
-The script will first attempt to discover active hosts in the configured IP range.
-
-Example output:
+The program first asks for authorization:
 
 ```text
-10.0.2.5 is Active
-10.0.2.10 is Active
+Authorized to scan? (yes/no):
 ```
 
-After host discovery, the program asks:
+Enter:
 
 ```text
-Enter Target IP
+yes
 ```
 
-Enter the IP address you want to scan, for example:
+to continue.
+
+If the user enters anything other than `yes`, the scan will be cancelled.
+
+## Network Discovery
+
+After authorization, the program starts the network discovery stage.
+
+The program gets the local IP address and uses the first three parts of the address to determine the local network range.
+
+It then checks IP addresses from `.1` to `.254`.
+
+For each address, the program tries to connect to port 80. If the connection is successful, the address is added to the list of discovered hosts.
+
+Example:
 
 ```text
-10.0.2.5
+Discovering devices...
+Found 3 device(s).
 ```
 
-The program then checks the predefined ports and displays results similar to:
+## Port Scanning
 
-```text
-Port22:OPEN
-Port23:CLOSED
-Port80:OPEN
-Port443:CLOSED
+After finding the active hosts, the program starts the port scanning stage.
+
+The current port list in `network.py` is:
+
+```python
+ports = [22, 80, 443]
 ```
 
-## How It Works
+For each discovered host, the program checks every port using a TCP socket.
 
-### Host Discovery
+If a connection is successful, the port is marked as `Open`.
 
-The `discover_hosts()` function loops through IP addresses from `10.0.2.1` to `10.0.2.19`.
+The program also matches common port numbers with service names such as SSH, HTTP, and HTTPS.
 
-For each address, it sends one ping request:
+## Test Server
+
+A separate file called `vulnerable_server.py` can be used as a simple test server in the controlled lab environment.
+
+If the test server is configured to listen on port 8080, add port 8080 to the list in `network.py` before testing:
+
+```python
+ports = [22, 80, 443, 8080]
+```
+
+This provides a controlled service that can be used to test the scanner.
+
+To run the test server:
 
 ```bash
-ping -c 1 <IP>
+python3 vulnerable_server.py
 ```
 
-If the ping command succeeds, the host is displayed as active.
+## Reports
 
-### Port Scanning
+After the scan is completed, the program creates a `reports` folder if it does not already exist.
 
-After discovery, the script asks for a target IP address.
+Two report files are generated:
 
-For every port in the predefined list, it:
+```text
+reports/scan_DATE_TIME.csv
+reports/scan_DATE_TIME.txt
+```
 
-1. Creates a TCP socket.
-2. Sets a 1-second timeout.
-3. Attempts a connection using `connect_ex()`.
-4. Displays the port as `OPEN` when the connection succeeds.
-5. Otherwise displays the port as `CLOSED`.
-6. Closes the socket before testing the next port.
+The CSV report contains:
 
-## Current Limitations
+- IP address
+- Hostname
+- Port
+- Status
+- Service
 
-- The discovery range is hard-coded to `10.0.2.1` through `10.0.2.19`.
-- The port list is hard-coded.
-- The script uses `ping -c 1`, which is designed for Unix-like systems.
-- A closed or filtered port may appear simply as `CLOSED`.
-- Service versions are not identified.
-- Results are printed to the terminal and are not saved to a file.
+The TXT report contains the same information in a simple text format.
 
-## Responsible Use
+Example:
 
-Use this script only on systems and networks that you own or have explicit permission to test.
+```text
+NETWORK SCAN REPORT
+========================================
+Date: 2026-08-10 16:30:00
+Open Ports: 2
 
-Unauthorized network scanning may violate organizational policies or applicable laws.
+IP: 10.0.2.15
+Hostname: example
+Port: 22
+Status: Open
+Service: SSH
+------------------------------
+```
 
-## File
+## Project Files
 
 ```text
 network.py
+vulnerable_server.py
+README.md
+reports/
 ```
 
-This file contains both the host-discovery and TCP port-scanning logic.
+### network.py
+
+This is the main program. It performs host discovery, port scanning, and creates the scan reports.
+
+### vulnerable_server.py
+
+This is the test server used in the controlled lab environment.
+
+### README.md
+
+This file explains the project and gives instructions for running and testing it.
+
+### reports/
+
+This folder contains the CSV and TXT files generated after a scan.
+
+## Limitations
+
+- The program checks the local network based on the IP address detected by the script.
+- Host discovery depends on whether the target accepts the connection used by the program.
+- Only the ports included in the `ports` list are checked.
+- Service names are based on the port number.
+- The scanner does not identify service versions.
+- A port that does not accept the connection is treated as not open.
+- Scan speed depends on the network and timeout settings.
+
+## Responsible Use
+
+This project is intended for learning and testing in a controlled environment.
+
+Only scan networks and devices that you own or have permission to test. Do not use the program to scan external or unauthorized systems.
+
+## Example Commands
+
+Run the main program:
+
+```bash
+python3 network.py
+```
+
+Run the test server:
+
+```bash
+python3 vulnerable_server.py
+```
+
+Check the project files:
+
+```bash
+ls
+```
+
+## Conclusion
+
+This project demonstrates basic network discovery and TCP port scanning using Python.
+
+It shows how active hosts can be found, how selected ports can be checked, and how scan results can be saved as CSV and TXT files. The controlled test server also provides a safe way to test the scanner.
