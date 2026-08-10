@@ -2,228 +2,339 @@
 
 ## Overview
 
-This project is a simple Python program for network discovery and TCP port scanning.
+This Python project performs basic network host discovery and TCP port scanning in a controlled lab environment.
 
-The program first finds active devices on the local network. After that, it scans selected TCP ports on the discovered hosts and shows which ports are open.
+The project consists of two main Python files:
 
-The project was tested in a controlled lab environment using Kali Linux.
+1. **network.py** — discovers active hosts and scans selected TCP ports.
+2. **vulnerable_server.py** — creates a simple TCP lab test server on port `8080` so the scanner can detect a known open port.
+
+The project is intended for networking practice, cybersecurity education, and authorized lab testing.
+
+---
 
 ## Features
 
-- Finds active hosts on the local network.
-- Uses Python sockets to check whether hosts are reachable.
-- Scans selected TCP ports.
-- Shows the IP address of discovered hosts.
-- Shows the hostname of the target when available.
-- Identifies common services based on port numbers.
-- Saves scan results as CSV and TXT files.
-- Creates a separate report for each scan.
-- Includes an authorization check before starting the scan.
+- Discovers active hosts from `10.0.2.1` through `10.0.2.19`.
+- Uses the system `ping` command for host discovery.
+- Allows the user to enter a target IP address.
+- Scans a predefined list of common TCP ports.
+- Uses Python sockets and `connect_ex()` to test connections.
+- Reports tested ports as `OPEN` or `CLOSED`.
+- Uses a 1-second socket timeout.
+- Includes a controlled TCP lab server running on port `8080`.
+- Requires no third-party Python packages.
+
+---
+
+## Project Files
+
+### `network.py`
+
+The main scanner program. It performs two tasks:
+
+- Network host discovery using ping requests.
+- TCP port scanning against a user-selected target.
+
+### `vulnerable_server.py`
+
+A simple TCP test server used in the controlled lab environment.
+
+The server:
+
+- Listens on TCP port `8080`.
+- Accepts incoming TCP connections.
+- Displays the address of connecting clients.
+- Sends a short welcome message.
+- Closes the client connection after sending the message.
+- Continues waiting for new connections.
+
+Although the filename is `vulnerable_server.py`, it is used as a controlled **lab test server**. The current program demonstrates detection of an open service rather than exploitation of a software vulnerability.
+
+---
 
 ## Ports Scanned
 
-The current program checks these TCP ports:
-
 | Port | Common Service |
 |------|----------------|
-| 22   | SSH            |
-| 80   | HTTP           |
-| 443  | HTTPS          |
+| 20 | FTP Data |
+| 21 | FTP Control |
+| 22 | SSH |
+| 23 | Telnet |
+| 25 | SMTP |
+| 53 | DNS |
+| 80 | HTTP |
+| 443 | HTTPS |
+| 8080 | Alternate HTTP / Lab Test Server |
 
-Port 8080 can also be added when testing with the lab server.
+Port `8080` is included so that `network.py` can detect the lab server during testing.
+
+---
 
 ## Requirements
 
-The project requires:
-
-- Kali Linux
 - Python 3
+- Unix/Linux environment such as Kali Linux
 
-The program uses standard Python libraries:
+The project uses only standard Python libraries:
 
+- `subprocess`
 - `socket`
-- `csv`
-- `os`
-- `datetime`
-- `concurrent.futures`
 
-No additional Python packages are required.
+No additional Python packages need to be installed.
+
+---
 
 ## How to Run
 
-Open a terminal in the project folder and run:
+### Step 1: Open the Project Folder
 
-```bash
-python3 network.py
-```
-
-The program first asks for authorization:
-
-```text
-Authorized to scan? (yes/no):
-```
-
-Enter:
-
-```text
-yes
-```
-
-to continue.
-
-If the user enters anything other than `yes`, the scan will be cancelled.
-
-## Network Discovery
-
-After authorization, the program starts the network discovery stage.
-
-The program gets the local IP address and uses the first three parts of the address to determine the local network range.
-
-It then checks IP addresses from `.1` to `.254`.
-
-For each address, the program tries to connect to port 80. If the connection is successful, the address is added to the list of discovered hosts.
-
-Example:
-
-```text
-Discovering devices...
-Found 3 device(s).
-```
-
-## Port Scanning
-
-After finding the active hosts, the program starts the port scanning stage.
-
-The current port list in `network.py` is:
-
-```python
-ports = [22, 80, 443]
-```
-
-For each discovered host, the program checks every port using a TCP socket.
-
-If a connection is successful, the port is marked as `Open`.
-
-The program also matches common port numbers with service names such as SSH, HTTP, and HTTPS.
-
-## Test Server
-
-A separate file called `vulnerable_server.py` can be used as a simple test server in the controlled lab environment.
-
-If the test server is configured to listen on port 8080, add port 8080 to the list in `network.py` before testing:
-
-```python
-ports = [22, 80, 443, 8080]
-```
-
-This provides a controlled service that can be used to test the scanner.
-
-To run the test server:
-
-```bash
-python3 vulnerable_server.py
-```
-
-## Reports
-
-After the scan is completed, the program creates a `reports` folder if it does not already exist.
-
-Two report files are generated:
-
-```text
-reports/scan_DATE_TIME.csv
-reports/scan_DATE_TIME.txt
-```
-
-The CSV report contains:
-
-- IP address
-- Hostname
-- Port
-- Status
-- Service
-
-The TXT report contains the same information in a simple text format.
-
-Example:
-
-```text
-NETWORK SCAN REPORT
-========================================
-Date: 2026-08-10 16:30:00
-Open Ports: 2
-
-IP: 10.0.2.15
-Hostname: example
-Port: 22
-Status: Open
-Service: SSH
-------------------------------
-```
-
-## Project Files
+Open a terminal in the folder containing:
 
 ```text
 network.py
 vulnerable_server.py
 README.md
-reports/
 ```
 
-### network.py
+### Step 2: Start the Lab Test Server
 
-This is the main program. It performs host discovery, port scanning, and creates the scan reports.
+Open the first terminal and run:
 
-### vulnerable_server.py
+```bash
+python vulnerable_server.py
+```
 
-This is the test server used in the controlled lab environment.
+The server should display:
 
-### README.md
+```text
+===================================
+       CYBERSECURITY LAB SERVER
+===================================
+Lab test server is running on port 8080
+Waiting for connections...
+-----------------------------------
+```
 
-This file explains the project and gives instructions for running and testing it.
+Keep this terminal running.
 
-### reports/
+### Step 3: Run the Network Scanner
 
-This folder contains the CSV and TXT files generated after a scan.
+Open a second terminal in the same project folder and run:
 
-## Limitations
+```bash
+python network.py
+```
 
-- The program checks the local network based on the IP address detected by the script.
-- Host discovery depends on whether the target accepts the connection used by the program.
-- Only the ports included in the `ports` list are checked.
-- Service names are based on the port number.
-- The scanner does not identify service versions.
-- A port that does not accept the connection is treated as not open.
-- Scan speed depends on the network and timeout settings.
+The program first performs host discovery on:
+
+```text
+10.0.2.1 - 10.0.2.19
+```
+
+Example:
+
+```text
+10.0.2.5 is Active
+10.0.2.10 is Active
+```
+
+After host discovery, the program asks:
+
+```text
+Enter Target IP:
+```
+
+For a simple test where the scanner and lab server are running on the same machine, enter:
+
+```text
+127.0.0.1
+```
+
+The scanner then checks the predefined TCP ports.
+
+Example:
+
+```text
+Scanning target: 127.0.0.1
+-----------------------------------
+Port 20: CLOSED
+Port 21: CLOSED
+Port 22: CLOSED
+Port 23: CLOSED
+Port 25: CLOSED
+Port 53: CLOSED
+Port 80: CLOSED
+Port 443: CLOSED
+Port 8080: OPEN
+-----------------------------------
+Port scan completed.
+```
+
+Because the lab test server is running on port `8080`, the scanner should report:
+
+```text
+Port 8080: OPEN
+```
+
+The server terminal should also display a connection from the scanner.
+
+---
+
+## How It Works
+
+### Host Discovery
+
+The `discover_hosts()` function loops through IP addresses from:
+
+```text
+10.0.2.1
+```
+
+to:
+
+```text
+10.0.2.19
+```
+
+For each address, the program executes:
+
+```bash
+ping -c 1 <IP>
+```
+
+The `subprocess` library allows the Python program to execute the system ping command.
+
+If the ping command completes successfully, the program displays the IP address as active.
+
+---
+
+## TCP Port Scanning
+
+After host discovery, the user enters a target IP address.
+
+For every port in the predefined list, `network.py`:
+
+1. Creates an IPv4 TCP socket.
+2. Sets a 1-second connection timeout.
+3. Attempts to connect to the target port using `connect_ex()`.
+4. Checks the returned result.
+5. Displays `OPEN` if the connection succeeds.
+6. Displays `CLOSED` if the connection does not succeed.
+7. Closes the socket.
+8. Continues to the next port.
+
+A result of `0` from `connect_ex()` indicates that the TCP connection was successfully established.
+
+---
+
+## Lab Test Server
+
+The `vulnerable_server.py` file provides a safe target for demonstrating the port scanner.
+
+The server is configured with:
+
+```text
+Host: 0.0.0.0
+Port: 8080
+Protocol: TCP
+```
+
+The server creates an IPv4 TCP socket, binds it to port `8080`, and waits for incoming connections.
+
+When the scanner connects to port `8080`, the server accepts the connection and sends:
+
+```text
+Welcome to the Cybersecurity Lab Test Server.
+
+This server is used for testing the network port scanner.
+```
+
+The connection is then closed and the server continues waiting for another connection.
+
+This provides a controlled way to verify that the scanner can correctly identify an open TCP port.
+
+---
+
+## Project Workflow
+
+```text
+Start
+  |
+  v
+Run vulnerable_server.py
+  |
+  v
+Server listens on port 8080
+  |
+  v
+Run network.py
+  |
+  v
+Discover active hosts
+  |
+  v
+Enter target IP
+  |
+  v
+Scan predefined TCP ports
+  |
+  v
+Attempt TCP connections
+  |
+  v
+Display OPEN / CLOSED results
+  |
+  v
+Detect port 8080 lab server
+  |
+  v
+End
+```
+
+---
+
+## Current Limitations
+
+- The discovery range is hard-coded to `10.0.2.1` through `10.0.2.19`.
+- The TCP port list is predefined.
+- Host discovery uses `ping -c 1`, which is intended for Unix/Linux systems.
+- The program does not distinguish between closed and filtered ports.
+- Service names and versions are not automatically identified.
+- Results are displayed in the terminal and are not saved to a file.
+- The scanner checks port availability but does not perform vulnerability detection.
+- Firewalls and network configuration may affect discovery and scanning results.
+
+---
+
+## Future Improvements
+
+Possible improvements include:
+
+- Allowing the user to specify the network range.
+- Allowing custom port ranges.
+- Saving scan results to a text, CSV, or JSON file.
+- Adding better error handling and input validation.
+- Identifying services running on open ports.
+- Creating a graphical user interface (GUI).
+- Improving reporting and logging.
+
+---
 
 ## Responsible Use
 
-This project is intended for learning and testing in a controlled environment.
+This project is intended for educational purposes and controlled lab testing.
 
-Only scan networks and devices that you own or have permission to test. Do not use the program to scan external or unauthorized systems.
+Only scan systems and networks that you own or have explicit permission to test.
 
-## Example Commands
+Unauthorized network scanning may violate organizational policies or applicable laws.
 
-Run the main program:
+---
 
-```bash
-python3 network.py
-```
+## Summary
 
-Run the test server:
+This project demonstrates two fundamental networking concepts using Python: **host discovery and TCP port scanning**.
 
-```bash
-python3 vulnerable_server.py
-```
+`network.py` identifies active hosts and checks selected TCP ports, while `vulnerable_server.py` provides a controlled TCP service on port `8080` for testing.
 
-Check the project files:
-
-```bash
-ls
-```
-
-## Conclusion
-
-This project demonstrates basic network discovery and TCP port scanning using Python.
-
-It shows how active hosts can be found, how selected ports can be checked, and how scan results can be saved as CSV and TXT files. The controlled test server also provides a safe way to test the scanner.
+Together, the files demonstrate how Python's `subprocess` and `socket` libraries can be used to perform basic network discovery and TCP connectivity testing.
