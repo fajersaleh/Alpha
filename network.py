@@ -6,12 +6,12 @@ import socket
 # Network Discovery
 
 def discover_hosts():
-    print("Discovering devices...", flush=True)
+    print("Discovering devices...")
 
     for i in range(1, 20):
         ip = "10.0.2." + str(i)
 
-        print(f"Checking {ip}...", flush=True)
+        print(f"Checking {ip}...")
 
         result = subprocess.run(
             ["ping", "-c", "1", "-W", "1", ip],
@@ -20,14 +20,14 @@ def discover_hosts():
         )
 
         if result.returncode == 0:
-            print(ip, "is Active", flush=True)
+            print(ip, "is Active")
 
 
 discover_hosts()
 
 # Port Scanner
 
-print("\nPORT SCANNER", flush=True)
+print("\nPORT SCANNER")
 
 target = input("Enter Target IP: ")
 
